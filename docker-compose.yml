@@ -1,0 +1,35 @@
+services:
+  comfyui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: comfyui:latest
+    container_name: comfyui
+    ports:
+      - "8188:8188"
+    volumes:
+      - ./models:/workspace/models
+      - ./output:/workspace/output
+      - ./input:/workspace/input
+      - ./user:/workspace/user
+      - ./custom_nodes:/workspace/custom_nodes
+      - ./_cache:/root/.cache
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - HF_HUB_OFFLINE=1
+      - TRANSFORMERS_OFFLINE=1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+    # "--default-device", "2" 选择第3个GPU
+    # "--default-device", "0" 选择第1个GPU
+    # 不加 --lowvram 这个生成音乐会很快，加了生成音乐很慢，没有使用到GPU，但是生成图片和视频是正常使用到GPU的，不知为何。
+    # command: ["python", "main.py", "--listen", "0.0.0.0", "--default-device", "2", "--disable-smart-memory", "--enable-manager"]
+    # command: ["python", "main.py", "--listen", "0.0.0.0", "--default-device", "2", "--lowvram", "--disable-smart-memory", "--enable-manager"]
+    # 后面再通过启动脚本 start-comfyui.sh 启动，因为经常要更新comfyui版本，容器直接启动的话，更新版本的时候依赖没更新，comfyui就启动失败了
+    command: ["sleep", "infinity"]
